@@ -3,8 +3,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
+from pydub import AudioSegment
 
-X_GROESSE_FENSTER = 500
+X_GROESSE_FENSTER = 520
 Y_GROESSE_FENSTER = 300
 X_POS_FENSTER = 600
 Y_POS_FENSTER = 300
@@ -61,8 +62,12 @@ class Fenster(QMainWindow):
 
     def initMe(self):
         # Initialisierung
+        self.pfad = ' '
         self.area = List(self)
-        self.area.setGeometry(10,40,X_GROESSE_FENSTER-245,190)
+        self.area.setGeometry(10,40,255,190)
+
+        self.textbox = QLineEdit(self)
+        self.textbox.setGeometry(300,150, 200,30)
 
         # Menu Bar Elemente
         exitMe = QAction('&Exit',self)
@@ -99,6 +104,10 @@ class Fenster(QMainWindow):
         button2.setToolTip('beende Programm')
         button2.clicked.connect(QtCore.QCoreApplication.instance().quit)
 
+        saveBtn = QPushButton('Speichern unter', self)
+        saveBtn.move(300, 190)
+        saveBtn.clicked.connect(self.speichernUnter)
+
         self.setGeometry(X_POS_FENSTER, Y_POS_FENSTER, X_GROESSE_FENSTER, Y_GROESSE_FENSTER)
         self.setFixedSize(X_GROESSE_FENSTER, Y_GROESSE_FENSTER)
         self.setWindowTitle('Konverter Wave zu MP3')
@@ -107,19 +116,33 @@ class Fenster(QMainWindow):
         # anzeigen
         self.show()
 
+    def speichernUnter(self):
+        openData = QFileDialog.getExistingDirectory(self,"Open a folder","C://",QFileDialog.ShowDirsOnly)
+        print(openData)
+        self.textbox.setText(openData)
+        self.pfad = openData
+
     def convert(self):
-        sender = self.sender()
-        print("ok ")
         items = self.area.itemList.findItems('.', QtCore.Qt.MatchContains)
         for i in items:
             self.area.itemList.setCurrentItem(i)
+            j = i.text()
+            toChange = j.split("///")
+            z = toChange[1].split("/")
+            ChangeName = z[len(z)-1]
+            change = str(toChange[1])
+            name = str(ChangeName).replace(".wav",".mp3")
+            path = str(self.pfad)
+            path += '/'
+            print(change)
+            print(path + name)
+            AudioSegment.from_wav(change).export(path + name, format="mp3")
             self.area.itemList.currentItem().setCheckState(Qt.Checked)
 
     def open(self):
         openData = QFileDialog.getOpenFileUrl(self, "Open a file", "C://")
         data = openData[0].toString()
         if self.area.drag(data):
-            print("Hier")
             self.area.drop()
 
     def keyPressEvent(self, QKeyEvent): # Bei Tastendruck
@@ -129,9 +152,4 @@ class Fenster(QMainWindow):
 app = QApplication(sys.argv)
 w = Fenster()
 sys.exit(app.exec_())
-
-#datei = open(r'D:\test\vonKath.txt', "w")
-#datei.write("hallo")
-#datei.close()
-#AudioSegment.from_wav(r'D:\test\vonKath.wav').export(r'D:\test\MP3vonKath.mp3', format="mp3")
 
