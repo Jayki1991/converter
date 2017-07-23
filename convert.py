@@ -123,6 +123,7 @@ class Fenster(QMainWindow):
         self.pfad = openData
 
     def convert(self):
+        # Funktionalität
         items = self.area.itemList.findItems('.', QtCore.Qt.MatchContains)
         for i in items:
             self.area.itemList.setCurrentItem(i)
