@@ -5,9 +5,41 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import *
 
 X_GROESSE_FENSTER = 500
-Y_GROESSE_FENSTER = 200
+Y_GROESSE_FENSTER = 300
 X_POS_FENSTER = 600
 Y_POS_FENSTER = 300
+
+class List(QScrollArea):
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setAcceptDrops(True)
+        self.itemList = QListWidget()
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setWidget(self.itemList)
+
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasFormat('text/uri-list'):
+            self.nameOfItem = e.mimeData().text()
+            x = self.nameOfItem.split(".")
+            if x[len(x)-1] == 'wav':
+                e.accept()
+            else:
+                e.ignore()
+        else:
+            e.ignore()
+
+    def dropEvent(self, e):
+        it = QListWidgetItem(self.nameOfItem)
+        it.setFlags(Qt.ItemIsUserCheckable)
+        it.setCheckState(Qt.Unchecked)
+        self.itemList.addItem(it)
+
+    def getItemList(self):
+        return self.itemList
+
 
 class Fenster(QMainWindow):
     def __init__(self):
@@ -16,6 +48,9 @@ class Fenster(QMainWindow):
 
     def initMe(self):
         # Initialisierung
+        self.area = List(self)
+        self.area.setGeometry(10,40,X_GROESSE_FENSTER-245,190)
+
         # Menu Bar Elemente
         exitMe = QAction('&Exit',self)
         exitMe.setShortcut('Ctrl+E')
@@ -57,6 +92,12 @@ class Fenster(QMainWindow):
     def convert(self):
         sender = self.sender()
         print("ok ")
+        items = self.area.itemList.findItems('.', QtCore.Qt.MatchContains)
+        for i in items:
+            self.area.itemList.setCurrentItem(i)
+            self.area.itemList.currentItem().setCheckState(Qt.Checked)
+
+
 
     def keyPressEvent(self, QKeyEvent): # Bei Tastendruck
         if QKeyEvent.key() == Qt.Key_E:
