@@ -22,26 +22,39 @@ class List(QScrollArea):
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat('text/uri-list'):
-            self.nameOfItem = e.mimeData().text()
-            x = self.nameOfItem.split(".")
-            if x[len(x)-1] == 'wav':
+            data = e.mimeData().text()
+            if self.drag(data):
                 e.accept()
             else:
                 e.ignore()
         else:
             e.ignore()
 
-    def dropEvent(self, e):
+    def drag(self, data):
+        self.nameOfItem = data
+        print(data)
+        x = self.nameOfItem.split(".")
+        print("hier")
+        if x[len(x) - 1] == 'wav':
+            return True
+        else:
+            return False
+
+    def drop(self):
         it = QListWidgetItem(self.nameOfItem)
         it.setFlags(Qt.ItemIsUserCheckable)
         it.setCheckState(Qt.Unchecked)
         self.itemList.addItem(it)
+
+    def dropEvent(self, e):
+        self.drop()
 
     def getItemList(self):
         return self.itemList
 
 
 class Fenster(QMainWindow):
+
     def __init__(self):
         super().__init__()
         self.initMe()
@@ -62,11 +75,16 @@ class Fenster(QMainWindow):
         convertMe.triggered.connect(self.convert)
         #convertMe.setStatusTip('convert')
 
+        openMe = QAction('&Open',self)
+        openMe.setShortcut('CTRL-O')
+        openMe.triggered.connect(self.open)
+
         # Menu Bar
         menubar = self.menuBar()
         file = menubar.addMenu('&Datei') # Das und gibt die Moeglichkeit von Alt+D
         file.addAction(exitMe)
         file.addAction(convertMe)
+        file.addAction(openMe)
 
         # Buttons
         #self.statusBar().showMessage('bereit')
@@ -97,15 +115,16 @@ class Fenster(QMainWindow):
             self.area.itemList.setCurrentItem(i)
             self.area.itemList.currentItem().setCheckState(Qt.Checked)
 
-
+    def open(self):
+        openData = QFileDialog.getOpenFileUrl(self, "Open a file", "C://")
+        data = openData[0].toString()
+        if self.area.drag(data):
+            print("Hier")
+            self.area.drop()
 
     def keyPressEvent(self, QKeyEvent): # Bei Tastendruck
         if QKeyEvent.key() == Qt.Key_E:
             self.close()
-
-
-
-
 
 app = QApplication(sys.argv)
 w = Fenster()
