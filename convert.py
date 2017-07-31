@@ -10,6 +10,10 @@ X_GROESSE_FENSTER = 520
 Y_GROESSE_FENSTER = 300
 X_POS_FENSTER = 600
 Y_POS_FENSTER = 300
+MP3 = 'MP3'
+MP4 = 'MP4'
+WAVE = 'WAVE'
+MOV = 'MOV'
 
 
 class Fenster(QMainWindow):
@@ -23,18 +27,19 @@ class Fenster(QMainWindow):
         self.pfad = ' '
         self.area = list.List(self)
         self.area.setGeometry(10,40,255,190)
-        self.fromDataTyp = ''
-        self.toDataType = ''
+        self.vomTyp = WAVE
+        self.zuTyp = MP3
 
         self.textbox = QLineEdit(self)
         self.textbox.setGeometry(300,150, 200,30)
         self.fromToText = QLabel("Konvertierung von WAVE zu MP3")
 
         fromText = QLabel("Von")
-        toText = QLabel("Zu")
+        zuText = QLabel(" => ")
         layout = QHBoxLayout()  # layout for the central widget
         layoutVertical = QVBoxLayout()
         layvfrom = QVBoxLayout()
+        layvbetween = QVBoxLayout()
         layvto = QVBoxLayout()
         widget = QWidget(self)  # central widget
         widget.setLayout(layoutVertical)
@@ -42,27 +47,30 @@ class Fenster(QMainWindow):
         layoutVertical.addLayout(layout)
 
         fromGroup = QButtonGroup(widget)  # Gruppe von
-        btnWave = QRadioButton("WAVE")
+        btnWave = QRadioButton(WAVE)
         btnWave.setChecked(True)
         fromGroup.addButton(btnWave)
-        btnMov = QRadioButton("MOV")
+        btnMov = QRadioButton(MOV)
         fromGroup.addButton(btnMov)
         #layvfrom.addWidget(fromText)
         layvfrom.addWidget(btnWave)
         layvfrom.addWidget(btnMov)
         layout.addLayout(layvfrom)
 
+        layvbetween.addWidget(zuText)
+        layout.addLayout(layvbetween)
+
         toGroup = QButtonGroup(widget)  # Gruppe zu
-        btnMp3 = QRadioButton("MP3")
+        btnMp3 = QRadioButton(MP3)
         btnMp3.setChecked(True)
         toGroup.addButton(btnMp3)
-        btnMp4 = QRadioButton("MP4")
+        btnMp4 = QRadioButton(MP4)
         toGroup.addButton(btnMp4)
         #layvto.addWidget(toText)
         layvto.addWidget(btnMp3)
         layvto.addWidget(btnMp4)
         layout.addLayout(layvto)
-        layout.addSpacing(105)
+        layout.addSpacing(80)
         layoutVertical.addSpacing(110)
         layoutVertical.addWidget(self.fromToText)
 
@@ -108,10 +116,10 @@ class Fenster(QMainWindow):
         # Buttons
         #self.statusBar().showMessage('bereit')
         QToolTip.setFont(QFont('Arial', 8))
-        button1 = QPushButton('konvertieren', self) # Self damit der Button auf dem Fenster ist
-        button1.move(X_POS_FENSTER-300,Y_GROESSE_FENSTER-50)
-        button1.setToolTip('Konvertierung von WAVE zu MP3')
-        button1.clicked.connect(self.convert)
+        self.btnConvert = QPushButton('konvertieren', self) # Self damit der Button auf dem Fenster ist
+        self.btnConvert.move(X_POS_FENSTER-300,Y_GROESSE_FENSTER-50)
+        self.btnConvert.setToolTip('Konvertierung von WAVE zu MP3')
+        self.btnConvert.clicked.connect(self.convert)
 
         button2 = QPushButton('Exit', self)  # Self damit der Button auf dem Fenster ist
         button2.move(X_POS_FENSTER-200,Y_GROESSE_FENSTER-50)
@@ -131,18 +139,24 @@ class Fenster(QMainWindow):
         self.show()
 
     def toBtn(self, _str):
-        self.toDataTyp = str(_str)
+        self.zuTyp = str(_str)
         self.textUpdate()
 
     def fromBtn(self, _str):
-        self.fromDataTyp = str(_str)
+        self.vomTyp = str(_str)
         self.textUpdate()
 
     def textUpdate(self):
-        print("hallo")
-        stringText = "JOOOWWW"
-        #stringText = 'Konvertierung von ' + str(self.fromDataTyp) + ' zu ' + str(self.toDataTyp)
+        stringText = 'Konvertierung von ' + str(self.vomTyp) + ' zu ' + str(self.zuTyp)
         self.fromToText.setText(stringText)
+        if self.vomTyp == WAVE and self.zuTyp == MP3:
+            self.btnConvert.setEnabled(True)
+        elif self.vomTyp == MOV and self.zuTyp == MP4:
+            self.btnConvert.setEnabled(False)
+            self.btnConvert.setToolTip("Funktion noch nicht implementiert!")
+        else:
+            self.btnConvert.setEnabled(False)
+            self.btnConvert.setToolTip("Keine Konvertierung von " + self.vomTyp + " zu " + self.zuTyp + "!")
 
     def speichernUnter(self):
         openData = QFileDialog.getExistingDirectory(self,"Open a folder","C://",QFileDialog.ShowDirsOnly)
@@ -153,6 +167,22 @@ class Fenster(QMainWindow):
     def convert(self):
         # Funktionalitäten
         items = self.area.itemList.findItems('.', QtCore.Qt.MatchContains)
+        von = ''
+        zu =  ''
+        if self.vomTyp == WAVE:
+            von = '.wav'
+        elif self.vomTyp == MOV:
+            von = '.mov'
+        else:
+            print('error') # TODO error
+
+        if self.zuTyp == MP3:
+            zu = '.mp3'
+        elif self.zuTyp == MP4:
+            zu = '.mp4'
+        else:
+            print("error")
+        print(von, zu)
         for i in items:
             self.area.itemList.setCurrentItem(i)
             j = i.text()
@@ -160,13 +190,16 @@ class Fenster(QMainWindow):
             z = toChange[1].split("/")
             ChangeName = z[len(z)-1]
             change = str(toChange[1])
-            name = str(ChangeName).replace(".wav",".mp3")
+            name = str(ChangeName).replace(von,zu)
             path = str(self.pfad)
             path += '/'
             print(change)
             print(path + name)
-            AudioSegment.from_wav(change).export(path + name, format="mp3")
-            self.area.itemList.currentItem().setCheckState(Qt.Checked)
+            if von == ".wav" and zu == ".mp3":
+                AudioSegment.from_wav(change).export(path + name, format="mp3")
+                self.area.itemList.currentItem().setCheckState(Qt.Checked)
+            elif von == ".mov" and zu == ".mp4":
+                print("TODO") # TODO Funktion finden
 
     def open(self):
         openData = QFileDialog.getOpenFileUrl(self, "Open a file", "C://")
